@@ -1,0 +1,148 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "lukas.gygi@gmail.com",
+    "longName": "Portal",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/hide_seconds.png",
+                "name": "IMAGE_HIDE_SECONDS",
+                "type": "png"
+            },
+            {
+                "file": "images/9s.png",
+                "name": "IMAGE_MIN_9",
+                "type": "png"
+            },
+            {
+                "file": "images/8s.png",
+                "name": "IMAGE_MIN_8",
+                "type": "png"
+            },
+            {
+                "file": "images/7s.png",
+                "name": "IMAGE_MIN_7",
+                "type": "png"
+            },
+            {
+                "file": "images/6s.png",
+                "name": "IMAGE_MIN_6",
+                "type": "png"
+            },
+            {
+                "file": "images/5s.png",
+                "name": "IMAGE_MIN_5",
+                "type": "png"
+            },
+            {
+                "file": "images/4s.png",
+                "name": "IMAGE_MIN_4",
+                "type": "png"
+            },
+            {
+                "file": "images/3s.png",
+                "name": "IMAGE_MIN_3",
+                "type": "png"
+            },
+            {
+                "file": "images/2s.png",
+                "name": "IMAGE_MIN_2",
+                "type": "png"
+            },
+            {
+                "file": "images/1s.png",
+                "name": "IMAGE_MIN_1",
+                "type": "png"
+            },
+            {
+                "file": "images/0s.png",
+                "name": "IMAGE_MIN_0",
+                "type": "png"
+            },
+            {
+                "characterRegex": "[0-9/]",
+                "file": "fonts/tahoma.ttf",
+                "name": "FONT_THOMA_12",
+                "trackingAdjust": 1,
+                "type": "font"
+            },
+            {
+                "file": "images/title_image.png",
+                "menuIcon": true,
+                "name": "IMAGE_TITLE",
+                "type": "png"
+            },
+            {
+                "file": "images/9.png",
+                "name": "IMAGE_NUM_9",
+                "type": "png"
+            },
+            {
+                "file": "images/8.png",
+                "name": "IMAGE_NUM_8",
+                "type": "png"
+            },
+            {
+                "file": "images/7.png",
+                "name": "IMAGE_NUM_7",
+                "type": "png"
+            },
+            {
+                "file": "images/6.png",
+                "name": "IMAGE_NUM_6",
+                "type": "png"
+            },
+            {
+                "file": "images/5.png",
+                "name": "IMAGE_NUM_5",
+                "type": "png"
+            },
+            {
+                "file": "images/4.png",
+                "name": "IMAGE_NUM_4",
+                "type": "png"
+            },
+            {
+                "file": "images/3.png",
+                "name": "IMAGE_NUM_3",
+                "type": "png"
+            },
+            {
+                "file": "images/2.png",
+                "name": "IMAGE_NUM_2",
+                "type": "png"
+            },
+            {
+                "file": "images/1.png",
+                "name": "IMAGE_NUM_1",
+                "type": "png"
+            },
+            {
+                "file": "images/0.png",
+                "name": "IMAGE_NUM_0",
+                "type": "png"
+            },
+            {
+                "file": "images/partal_mockup.png",
+                "name": "IMAGE_BACKGROUND",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "Portal",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
+    "uuid": "14163fb3-75d1-44f2-8763-6995581c5e9c",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
