@@ -8,6 +8,9 @@ static GBitmap *s_background_bitmap;
 static BitmapLayer *s_seconds_layer;
 static GBitmap *s_seconds_bitmap;
 
+static TextLayer *s_date_layer;
+static GFont *s_date_font;
+
 #define TOTAL_IMAGE_SLOTS 4
 #define NUMBER_OF_IMAGES 10
 #define EMPTY_SLOT -1
@@ -33,6 +36,12 @@ static int s_image_slot_state[TOTAL_IMAGE_SLOTS] = {EMPTY_SLOT, EMPTY_SLOT, EMPT
 static GBitmap *s_images[TOTAL_IMAGE_SLOTS];
 static BitmapLayer *s_image_layers[TOTAL_IMAGE_SLOTS];
 
+static void bluetooth_connection_callback(bool connected) {
+  if(!connected)
+    vibes_double_pulse();
+  else
+    vibes_long_pulse();
+}
 
 static void load_image_into_slot(int slot_number, int digit_value) {
 
@@ -87,7 +96,7 @@ static void unload_image_from_slot(int slot_number){
 }
 
 static void display_value(unsigned short value, bool hour){
-  //if hour then write into hour position, else minute
+  //if hour == true then write into hour position, else minute
   value = value % 100;
   
   for(int position = 1; position >= 0; position--){
@@ -108,13 +117,15 @@ static unsigned short get_display_hour(unsigned short hour) {
 }
 
 static void update_seconds(int sec){
-  if(sec % 2 == 0){
-     layer_set_frame(bitmap_layer_get_layer(s_seconds_layer), GRect((sec * 2) + 22, 97, 118, 16));
-  }
+  //if(sec % 2 == 0){
+     layer_set_frame(bitmap_layer_get_layer(s_seconds_layer), GRect((sec * 2) + 22, 97, 119, 16));
+  //}
 }
 
-static void update_date(struct tm *ticktime){
-  
+static void update_date(struct tm *tick_time){
+  static char date_text[] = "01/01";
+  strftime(date_text, sizeof(date_text), "%d/%m", tick_time);
+  text_layer_set_text(s_date_layer, date_text);
 }
 
 static void update_time(struct tm *tick_time){
@@ -139,9 +150,18 @@ static void main_window_load(Window *window) {
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_background_layer));
   
   s_seconds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_HIDE_SECONDS);
-  s_seconds_layer = bitmap_layer_create(GRect(22, 97, 118, 16));
-  bitmap_layer_set_bitmap(s_background_layer, s_seconds_bitmap);
+  s_seconds_layer = bitmap_layer_create(GRect(22, 97, 119, 16));
+  bitmap_layer_set_bitmap(s_seconds_layer, s_seconds_bitmap);
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_seconds_layer));
+  
+  s_date_layer = text_layer_create(GRect(28, 84, 30, 10));
+  text_layer_set_text_color(s_date_layer, GColorBlack);
+  text_layer_set_background_color(s_date_layer, GColorClear);
+  text_layer_set_text(s_date_layer, "01/01");
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
+  s_date_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_THOMA_9));
+  text_layer_set_font(s_date_layer, s_date_font);
+  text_layer_set_text_alignment(s_date_layer, GTextAlignmentLeft);
   
   time_t now = time(NULL);
   struct tm *tick_time = localtime(&now);
@@ -159,6 +179,9 @@ static void main_window_unload(Window *window){
   for(int i = 0; i < TOTAL_IMAGE_SLOTS; i++){
     unload_image_from_slot(i);
   }
+  gbitmap_destroy(s_seconds_bitmap);
+  bitmap_layer_destroy(s_seconds_layer);
+  text_layer_destroy(s_date_layer);
 }
 
 void handle_init(void) {
@@ -168,11 +191,12 @@ void handle_init(void) {
     .unload = main_window_unload
   });
   window_stack_push(s_main_window, true);
-  
+  bluetooth_connection_service_subscribe(bluetooth_connection_callback);
   
 }
 
 void handle_deinit(void) {
+  bluetooth_connection_service_unsubscribe();
   window_destroy(s_main_window);
 }
 
