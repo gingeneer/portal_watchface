@@ -9,6 +9,106 @@
     "resources": {
         "media": [
             {
+                "file": "images/t19.png",
+                "name": "IMAGE_TILE_19",
+                "type": "png"
+            },
+            {
+                "file": "images/t18.png",
+                "name": "IMAGE_TILE_18",
+                "type": "png"
+            },
+            {
+                "file": "images/t17.png",
+                "name": "IMAGE_TILE_17",
+                "type": "png"
+            },
+            {
+                "file": "images/t16.png",
+                "name": "IMAGE_TILE_16",
+                "type": "png"
+            },
+            {
+                "file": "images/t15.png",
+                "name": "IMAGE_TILE_15",
+                "type": "png"
+            },
+            {
+                "file": "images/t14.png",
+                "name": "IMAGE_TILE_14",
+                "type": "png"
+            },
+            {
+                "file": "images/t13.png",
+                "name": "IMAGE_TILE_13",
+                "type": "png"
+            },
+            {
+                "file": "images/t12.png",
+                "name": "IMAGE_TILE_12",
+                "type": "png"
+            },
+            {
+                "file": "images/t11.png",
+                "name": "IMAGE_TILE_11",
+                "type": "png"
+            },
+            {
+                "file": "images/t10.png",
+                "name": "IMAGE_TILE_10",
+                "type": "png"
+            },
+            {
+                "file": "images/t9.png",
+                "name": "IMAGE_TILE_9",
+                "type": "png"
+            },
+            {
+                "file": "images/t8.png",
+                "name": "IMAGE_TILE_8",
+                "type": "png"
+            },
+            {
+                "file": "images/t7.png",
+                "name": "IMAGE_TILE_7",
+                "type": "png"
+            },
+            {
+                "file": "images/t6.png",
+                "name": "IMAGE_TILE_6",
+                "type": "png"
+            },
+            {
+                "file": "images/t5.png",
+                "name": "IMAGE_TILE_5",
+                "type": "png"
+            },
+            {
+                "file": "images/t4.png",
+                "name": "IMAGE_TILE_4",
+                "type": "png"
+            },
+            {
+                "file": "images/t3.png",
+                "name": "IMAGE_TILE_3",
+                "type": "png"
+            },
+            {
+                "file": "images/t2.png",
+                "name": "IMAGE_TILE_2",
+                "type": "png"
+            },
+            {
+                "file": "images/t1.png",
+                "name": "IMAGE_TILE_1",
+                "type": "png"
+            },
+            {
+                "file": "images/t0.png",
+                "name": "IMAGE_TILE_0",
+                "type": "png"
+            },
+            {
                 "file": "images/hide_seconds.png",
                 "name": "IMAGE_HIDE_SECONDS",
                 "type": "png"

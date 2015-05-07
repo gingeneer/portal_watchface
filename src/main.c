@@ -13,7 +13,11 @@ static GFont *s_date_font;
 
 #define TOTAL_IMAGE_SLOTS 4
 #define NUMBER_OF_IMAGES 10
+#define TOTAL_TILE_SLOTS 3
+#define NUMBER_OF_TILES 20
 #define EMPTY_SLOT -1
+  
+static int s_random_array[NUMBER_OF_TILES];
 
 // bigger images for hour
 const int IMAGE_RESOURCE_IDS_HOUR[NUMBER_OF_IMAGES] = {
@@ -31,10 +35,26 @@ const int IMAGE_RESOURCE_IDS_MIN[NUMBER_OF_IMAGES] = {
   RESOURCE_ID_IMAGE_MIN_9
 };
 
+// tile images
+const int IMAGE_RESOURCE_IDS_TILE[NUMBER_OF_TILES] = {
+  RESOURCE_ID_IMAGE_TILE_0, RESOURCE_ID_IMAGE_TILE_1, RESOURCE_ID_IMAGE_TILE_2,
+  RESOURCE_ID_IMAGE_TILE_3, RESOURCE_ID_IMAGE_TILE_4, RESOURCE_ID_IMAGE_TILE_5,
+  RESOURCE_ID_IMAGE_TILE_6, RESOURCE_ID_IMAGE_TILE_7, RESOURCE_ID_IMAGE_TILE_8,
+  RESOURCE_ID_IMAGE_TILE_9, RESOURCE_ID_IMAGE_TILE_10, RESOURCE_ID_IMAGE_TILE_11,
+  RESOURCE_ID_IMAGE_TILE_12, RESOURCE_ID_IMAGE_TILE_13, RESOURCE_ID_IMAGE_TILE_14,
+  RESOURCE_ID_IMAGE_TILE_15, RESOURCE_ID_IMAGE_TILE_16, RESOURCE_ID_IMAGE_TILE_17,
+  RESOURCE_ID_IMAGE_TILE_18, RESOURCE_ID_IMAGE_TILE_19
+};
+
 static int s_image_slot_state[TOTAL_IMAGE_SLOTS] = {EMPTY_SLOT, EMPTY_SLOT, EMPTY_SLOT, EMPTY_SLOT};
+
+static int s_tile_slot_state[TOTAL_TILE_SLOTS] = {EMPTY_SLOT, EMPTY_SLOT, EMPTY_SLOT};
 
 static GBitmap *s_images[TOTAL_IMAGE_SLOTS];
 static BitmapLayer *s_image_layers[TOTAL_IMAGE_SLOTS];
+
+static GBitmap *s_tiles[TOTAL_TILE_SLOTS];
+static BitmapLayer *s_tile_layers[TOTAL_TILE_SLOTS];
 
 static void bluetooth_connection_callback(bool connected) {
   if(!connected)
@@ -43,7 +63,7 @@ static void bluetooth_connection_callback(bool connected) {
     vibes_long_pulse();
 }
 
-static void load_image_into_slot(int slot_number, int digit_value) {
+static void load_digit_image_into_slot(int slot_number, int digit_value) {
 
   if ((slot_number < 0) || (slot_number >= TOTAL_IMAGE_SLOTS)) {
     return;
@@ -86,12 +106,55 @@ static void load_image_into_slot(int slot_number, int digit_value) {
   layer_add_child(window_layer, bitmap_layer_get_layer(bitmap_layer));
 }
 
-static void unload_image_from_slot(int slot_number){
+static void load_tile_image_into_slot(int slot_number, int tile_number) {
+
+  if ((slot_number < 0) || (slot_number >= TOTAL_TILE_SLOTS)) {
+    return;
+  }
+
+  if ((tile_number < 0) || (tile_number > (NUMBER_OF_TILES - 1))) {
+    return;
+  }
+
+  if (s_tile_slot_state[slot_number] != EMPTY_SLOT) {
+    return;
+  }
+  
+  s_tile_slot_state[slot_number] = tile_number;
+  
+  s_tiles[slot_number] = gbitmap_create_with_resource(IMAGE_RESOURCE_IDS_TILE[tile_number]);
+  
+  #ifdef PBL_PLATFORM_BASALT
+    GRect bounds = gbitmap_get_bounds(s_tiles[slot_number]);
+  #else
+    GRect bounds = s_tiles[slot_number]->bounds;
+  #endif
+  
+  BitmapLayer *bitmap_layer;    
+  
+  bitmap_layer = bitmap_layer_create(GRect((slot_number * 41) + 24, 125, bounds.size.w, bounds.size.h));
+  
+  s_tile_layers[slot_number] = bitmap_layer;
+  bitmap_layer_set_bitmap(bitmap_layer, s_tiles[slot_number]);
+  Layer *window_layer = window_get_root_layer(s_main_window);
+  layer_add_child(window_layer, bitmap_layer_get_layer(bitmap_layer));
+}
+
+static void unload_digit_image_from_slot(int slot_number){
   if(s_image_slot_state[slot_number] != EMPTY_SLOT){
     layer_remove_from_parent(bitmap_layer_get_layer(s_image_layers[slot_number]));
     bitmap_layer_destroy(s_image_layers[slot_number]);
     gbitmap_destroy(s_images[slot_number]);
     s_image_slot_state[slot_number] = EMPTY_SLOT;
+  }
+}
+
+static void unload_tile_image_from_slot(int slot_number){
+  if(s_tile_slot_state[slot_number] != EMPTY_SLOT){
+    layer_remove_from_parent(bitmap_layer_get_layer(s_tile_layers[slot_number]));
+    bitmap_layer_destroy(s_tile_layers[slot_number]);
+    gbitmap_destroy(s_tiles[slot_number]);
+    s_tile_slot_state[slot_number] = EMPTY_SLOT;
   }
 }
 
@@ -101,8 +164,8 @@ static void display_value(unsigned short value, bool hour){
   
   for(int position = 1; position >= 0; position--){
     int slot_number = (!hour * 2) + position;
-    unload_image_from_slot(slot_number);
-    load_image_into_slot(slot_number, value % 10);
+    unload_digit_image_from_slot(slot_number);
+    load_digit_image_into_slot(slot_number, value % 10);
     value = value / 10;
   }
 }
@@ -116,10 +179,20 @@ static unsigned short get_display_hour(unsigned short hour) {
   return display_hour ? display_hour : 12;
 }
 
+static void update_tiles(){
+  // switch around elements in list randomly, to avoid the same numbers
+  for (int i = 0; i < TOTAL_TILE_SLOTS; i++){
+    int j = i + rand() % (NUMBER_OF_TILES - i);
+    int temp = s_random_array[i];
+    s_random_array[i] = s_random_array[j];
+    s_random_array[j] = temp;
+    unload_tile_image_from_slot(i);
+    load_tile_image_into_slot(i, s_random_array[i]);
+  } 
+}
+
 static void update_seconds(int sec){
-  //if(sec % 2 == 0){
-     layer_set_frame(bitmap_layer_get_layer(s_seconds_layer), GRect((sec * 2) + 22, 97, 119, 16));
-  //}
+  layer_set_frame(bitmap_layer_get_layer(s_seconds_layer), GRect((sec * 2) + 22, 97, 119, 16));
 }
 
 static void update_date(struct tm *tick_time){
@@ -131,19 +204,23 @@ static void update_date(struct tm *tick_time){
 static void update_time(struct tm *tick_time){
   display_value(get_display_hour(tick_time->tm_hour), true);
   display_value(tick_time->tm_min, false);
-  if(!tick_time->tm_hour && !tick_time->tm_min){
-    update_date(tick_time);
+  if(!tick_time->tm_min){
+    update_tiles();
+    if(!tick_time->tm_hour){
+      update_date(tick_time);
+    }
   }
 }
 
 static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed){
-  update_seconds(tick_time->tm_sec);
+  update_seconds(tick_time->tm_sec); 
   if(tick_time->tm_sec == 0){
     update_time(tick_time);
   }
 }
 
 static void main_window_load(Window *window) {
+  srand(time(NULL));
   s_background_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACKGROUND);
   s_background_layer = bitmap_layer_create(GRect(0, 0, 144, 168));
   bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
@@ -163,10 +240,15 @@ static void main_window_load(Window *window) {
   text_layer_set_font(s_date_layer, s_date_font);
   text_layer_set_text_alignment(s_date_layer, GTextAlignmentLeft);
   
+  for (int i = 0; i < NUMBER_OF_TILES; i++){
+    s_random_array[i] = i;
+  }
+  
   time_t now = time(NULL);
   struct tm *tick_time = localtime(&now);
   update_date(tick_time);
   update_time(tick_time);
+  update_tiles();
   update_seconds(tick_time->tm_sec);
 
   tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
@@ -177,7 +259,10 @@ static void main_window_unload(Window *window){
   gbitmap_destroy(s_background_bitmap);
   bitmap_layer_destroy(s_background_layer);
   for(int i = 0; i < TOTAL_IMAGE_SLOTS; i++){
-    unload_image_from_slot(i);
+    unload_digit_image_from_slot(i);
+  }
+  for(int i = 0; i < TOTAL_TILE_SLOTS; i++){
+    unload_tile_image_from_slot(i);
   }
   gbitmap_destroy(s_seconds_bitmap);
   bitmap_layer_destroy(s_seconds_layer);
