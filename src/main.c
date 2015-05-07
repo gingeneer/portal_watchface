@@ -11,6 +11,9 @@ static GBitmap *s_seconds_bitmap;
 static TextLayer *s_date_layer;
 static GFont *s_date_font;
 
+static bool s_charging;
+static bool s_disconnected;
+
 #define TOTAL_IMAGE_SLOTS 4
 #define NUMBER_OF_IMAGES 10
 #define TOTAL_TILE_SLOTS 3
@@ -56,11 +59,38 @@ static BitmapLayer *s_image_layers[TOTAL_IMAGE_SLOTS];
 static GBitmap *s_tiles[TOTAL_TILE_SLOTS];
 static BitmapLayer *s_tile_layers[TOTAL_TILE_SLOTS];
 
+
+static void load_status_image_into_slot(bool bluetooth);
+static void unload_tile_image_from_slot(int slot_number);
+static void load_tile_image_into_slot(int slot_number, int tile_number);
+
+static void handle_battery(BatteryChargeState charge_state) {
+  if(!charge_state.is_plugged){
+    s_charging = false;
+    unload_tile_image_from_slot(0);
+    load_tile_image_into_slot(0, s_random_array[0]);
+  }
+  else{
+    s_charging = true;
+    load_status_image_into_slot(false);
+  }
+  
+  int percent = charge_state.charge_percent;
+  layer_set_frame(bitmap_layer_get_layer(s_seconds_layer), GRect((percent * 1.2) + 22, 97, 119, 16));
+}
+
 static void bluetooth_connection_callback(bool connected) {
-  if(!connected)
-    vibes_double_pulse();
-  else
+  if(connected){
     vibes_long_pulse();
+    s_disconnected = false;
+    unload_tile_image_from_slot(2);
+    load_tile_image_into_slot(2, s_random_array[2]);
+  }
+  else{
+    vibes_double_pulse();
+    s_disconnected = true;
+    load_status_image_into_slot(true);
+  }
 }
 
 static void load_digit_image_into_slot(int slot_number, int digit_value) {
@@ -158,6 +188,39 @@ static void unload_tile_image_from_slot(int slot_number){
   }
 }
 
+//true if bluetooth needs to be activated, else charging
+static void load_status_image_into_slot(bool bluetooth){
+  int slot_number;
+  if(bluetooth){
+    slot_number = 2;
+    unload_tile_image_from_slot(slot_number);
+    s_tiles[slot_number] = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_STATUS_DISCONNECTED);
+  }
+  else{
+    slot_number = 0;
+    unload_tile_image_from_slot(slot_number);
+    s_tiles[slot_number] = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_STATUS_CHARGING);
+  }
+  
+    
+  s_tile_slot_state[slot_number] = bluetooth + 100;
+  
+  #ifdef PBL_PLATFORM_BASALT
+    GRect bounds = gbitmap_get_bounds(s_tiles[slot_number]);
+  #else
+    GRect bounds = s_tiles[slot_number]->bounds;
+  #endif
+  
+  BitmapLayer *bitmap_layer;    
+  
+  bitmap_layer = bitmap_layer_create(GRect((slot_number * 41) + 24, 125, bounds.size.w, bounds.size.h));
+  
+  s_tile_layers[slot_number] = bitmap_layer;
+  bitmap_layer_set_bitmap(bitmap_layer, s_tiles[slot_number]);
+  Layer *window_layer = window_get_root_layer(s_main_window);
+  layer_add_child(window_layer, bitmap_layer_get_layer(bitmap_layer));
+}
+
 static void display_value(unsigned short value, bool hour){
   //if hour == true then write into hour position, else minute
   value = value % 100;
@@ -182,6 +245,12 @@ static unsigned short get_display_hour(unsigned short hour) {
 static void update_tiles(){
   // switch around elements in list randomly, to avoid the same numbers
   for (int i = 0; i < TOTAL_TILE_SLOTS; i++){
+    if(i == 0 && s_charging){
+      continue;
+    }
+    else if(i == 2 && s_disconnected){
+      continue;
+    }
     int j = i + rand() % (NUMBER_OF_TILES - i);
     int temp = s_random_array[i];
     s_random_array[i] = s_random_array[j];
@@ -191,9 +260,9 @@ static void update_tiles(){
   } 
 }
 
-static void update_seconds(int sec){
-  layer_set_frame(bitmap_layer_get_layer(s_seconds_layer), GRect((sec * 2) + 22, 97, 119, 16));
-}
+//static void update_seconds(int sec){
+  //layer_set_frame(bitmap_layer_get_layer(s_seconds_layer), GRect((sec * 2) + 22, 97, 119, 16));
+//}
 
 static void update_date(struct tm *tick_time){
   static char date_text[] = "01/01";
@@ -204,7 +273,7 @@ static void update_date(struct tm *tick_time){
 static void update_time(struct tm *tick_time){
   display_value(get_display_hour(tick_time->tm_hour), true);
   display_value(tick_time->tm_min, false);
-  if(!tick_time->tm_min){
+  if(!(tick_time->tm_min % 30)){
     update_tiles();
     if(!tick_time->tm_hour){
       update_date(tick_time);
@@ -212,11 +281,11 @@ static void update_time(struct tm *tick_time){
   }
 }
 
-static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed){
-  update_seconds(tick_time->tm_sec); 
-  if(tick_time->tm_sec == 0){
+static void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed){
+  //update_seconds(tick_time->tm_sec); 
+  //if(tick_time->tm_sec == 0){
     update_time(tick_time);
-  }
+  //}
 }
 
 static void main_window_load(Window *window) {
@@ -249,10 +318,23 @@ static void main_window_load(Window *window) {
   update_date(tick_time);
   update_time(tick_time);
   update_tiles();
-  update_seconds(tick_time->tm_sec);
-
-  tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
+//  update_seconds(tick_time->tm_sec);
   
+  handle_battery(battery_state_service_peek());
+  
+  if(bluetooth_connection_service_peek()){
+    s_disconnected = false;
+    update_tiles();
+  }
+  else{
+    s_disconnected = true;
+    load_status_image_into_slot(true);
+  }
+  
+  
+  tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
+  bluetooth_connection_service_subscribe(bluetooth_connection_callback);
+  battery_state_service_subscribe(handle_battery);
 }
 
 static void main_window_unload(Window *window){
@@ -267,6 +349,8 @@ static void main_window_unload(Window *window){
   gbitmap_destroy(s_seconds_bitmap);
   bitmap_layer_destroy(s_seconds_layer);
   text_layer_destroy(s_date_layer);
+  battery_state_service_unsubscribe();
+  bluetooth_connection_service_unsubscribe();
 }
 
 void handle_init(void) {
@@ -276,12 +360,9 @@ void handle_init(void) {
     .unload = main_window_unload
   });
   window_stack_push(s_main_window, true);
-  bluetooth_connection_service_subscribe(bluetooth_connection_callback);
-  
 }
 
 void handle_deinit(void) {
-  bluetooth_connection_service_unsubscribe();
   window_destroy(s_main_window);
 }
 

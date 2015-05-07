@@ -9,6 +9,16 @@
     "resources": {
         "media": [
             {
+                "file": "images/disconnected.png",
+                "name": "IMAGE_STATUS_DISCONNECTED",
+                "type": "png"
+            },
+            {
+                "file": "images/charging.png",
+                "name": "IMAGE_STATUS_CHARGING",
+                "type": "png"
+            },
+            {
                 "file": "images/t19.png",
                 "name": "IMAGE_TILE_19",
                 "type": "png"
@@ -164,7 +174,7 @@
                 "type": "png"
             },
             {
-                "characterRegex": "[0-9/]",
+                "characterRegex": "[a-z0-9/\\s]",
                 "file": "fonts/tahoma.ttf",
                 "name": "FONT_THOMA_9",
                 "trackingAdjust": 1,
