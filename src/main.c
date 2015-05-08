@@ -5,8 +5,8 @@ Window *s_main_window;
 static BitmapLayer *s_background_layer;
 static GBitmap *s_background_bitmap;
 
-static BitmapLayer *s_seconds_layer;
-static GBitmap *s_seconds_bitmap;
+static BitmapLayer *s_battery_layer;
+static GBitmap *s_battery_bitmap;
 
 static TextLayer *s_date_layer;
 static GFont *s_date_font;
@@ -76,7 +76,7 @@ static void handle_battery(BatteryChargeState charge_state) {
   }
   
   int percent = charge_state.charge_percent;
-  layer_set_frame(bitmap_layer_get_layer(s_seconds_layer), GRect((percent * 1.2) + 22, 97, 119, 16));
+  layer_set_frame(bitmap_layer_get_layer(s_battery_layer), GRect((percent * 1.2) + 22, 97, 119, 16));
 }
 
 static void bluetooth_connection_callback(bool connected) {
@@ -260,10 +260,6 @@ static void update_tiles(){
   } 
 }
 
-//static void update_seconds(int sec){
-  //layer_set_frame(bitmap_layer_get_layer(s_seconds_layer), GRect((sec * 2) + 22, 97, 119, 16));
-//}
-
 static void update_date(struct tm *tick_time){
   static char date_text[] = "01/01";
   strftime(date_text, sizeof(date_text), "%d/%m", tick_time);
@@ -282,10 +278,7 @@ static void update_time(struct tm *tick_time){
 }
 
 static void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed){
-  //update_seconds(tick_time->tm_sec); 
-  //if(tick_time->tm_sec == 0){
-    update_time(tick_time);
-  //}
+  update_time(tick_time);
 }
 
 static void main_window_load(Window *window) {
@@ -295,10 +288,10 @@ static void main_window_load(Window *window) {
   bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_background_layer));
   
-  s_seconds_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_HIDE_SECONDS);
-  s_seconds_layer = bitmap_layer_create(GRect(22, 97, 119, 16));
-  bitmap_layer_set_bitmap(s_seconds_layer, s_seconds_bitmap);
-  layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_seconds_layer));
+  s_battery_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_HIDE_BATTERY);
+  s_battery_layer = bitmap_layer_create(GRect(22, 97, 119, 16));
+  bitmap_layer_set_bitmap(s_battery_layer, s_battery_bitmap);
+  layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_battery_layer));
   
   s_date_layer = text_layer_create(GRect(28, 84, 30, 10));
   text_layer_set_text_color(s_date_layer, GColorBlack);
@@ -318,7 +311,6 @@ static void main_window_load(Window *window) {
   update_date(tick_time);
   update_time(tick_time);
   update_tiles();
-//  update_seconds(tick_time->tm_sec);
   
   handle_battery(battery_state_service_peek());
   
@@ -346,8 +338,8 @@ static void main_window_unload(Window *window){
   for(int i = 0; i < TOTAL_TILE_SLOTS; i++){
     unload_tile_image_from_slot(i);
   }
-  gbitmap_destroy(s_seconds_bitmap);
-  bitmap_layer_destroy(s_seconds_layer);
+  gbitmap_destroy(s_battery_bitmap);
+  bitmap_layer_destroy(s_battery_layer);
   text_layer_destroy(s_date_layer);
   battery_state_service_unsubscribe();
   bluetooth_connection_service_unsubscribe();

@@ -120,7 +120,7 @@
             },
             {
                 "file": "images/hide_seconds.png",
-                "name": "IMAGE_HIDE_SECONDS",
+                "name": "IMAGE_HIDE_BATTERY",
                 "type": "png"
             },
             {
@@ -251,7 +251,7 @@
     ],
     "uuid": "14163fb3-75d1-44f2-8763-6995581c5e9c",
     "versionCode": 1,
-    "versionLabel": "1.0",
+    "versionLabel": "1.1",
     "watchapp": {
         "watchface": true
     }
